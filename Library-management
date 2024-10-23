@@ -1,0 +1,151 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+struct Book {
+    int id;
+    char title[50];
+    char author[50];
+    int is_issued;  // 0 = available, 1 = issued
+};
+
+void add_book() {
+    struct Book book;
+    FILE *file = fopen("library.dat", "ab");
+
+    printf("Enter book ID: ");
+    scanf("%d", &book.id);
+    printf("Enter book title: ");
+    scanf("%s", book.title);
+    printf("Enter book author: ");
+    scanf("%s", book.author);
+    book.is_issued = 0;  // Initially, the book is available
+
+    fwrite(&book, sizeof(struct Book), 1, file);
+    fclose(file);
+    printf("Book successfully added.\n");
+}
+void search_book() {
+    int id;
+    struct Book book;
+    FILE *file = fopen("library.dat", "rb");
+
+    printf("Enter book ID: ");
+    scanf("%d", &id);
+
+    while (fread(&book, sizeof(struct Book), 1, file)) {
+        if (book.id == id) {
+            printf("\nBook ID: %d\n", book.id);
+            printf("Title: %s\n", book.title);
+            printf("Author: %s\n", book.author);
+            printf("Status: %s\n", book.is_issued ? "Issued" : "Available");
+            fclose(file);
+            return;
+        }
+    }
+
+    printf("Book not found.\n");
+    fclose(file);
+}
+void issue_book() {
+    int id;
+    struct Book book;
+    FILE *file = fopen("library.dat", "rb+");
+
+    printf("Enter book ID to issue: ");
+    scanf("%d", &id);
+
+    while (fread(&book, sizeof(struct Book), 1, file)) {
+        if (book.id == id) {
+            if (book.is_issued) {
+                printf("The book is already issued.\n");
+            } else {
+                book.is_issued = 1;
+                fseek(file, -sizeof(struct Book), SEEK_CUR);
+                fwrite(&book, sizeof(struct Book), 1, file);
+                printf("Book issued successfully.\n");
+            }
+            fclose(file);
+            return;
+        }
+    }
+
+    printf("Book not found.\n");
+    fclose(file);
+}
+void return_book() {
+    int id;
+    struct Book book;
+    FILE *file = fopen("library.dat", "rb+");
+
+    printf("Enter book ID to return: ");
+    scanf("%d", &id);
+
+    while (fread(&book, sizeof(struct Book), 1, file)) {
+        if (book.id == id) {
+            if (!book.is_issued) {
+                printf("The book is already in the library.\n");
+            } else {
+                book.is_issued = 0;
+                fseek(file, -sizeof(struct Book), SEEK_CUR);
+                fwrite(&book, sizeof(struct Book), 1, file);
+                printf("Book returned successfully.\n");
+            }
+            fclose(file);
+            return;
+        }
+    }
+
+    printf("Book not found.\n");
+    fclose(file);
+}
+void display_books() {
+    struct Book book;
+    FILE *file = fopen("library.dat", "rb");
+
+    printf("\nAll books in the library:\n");
+    printf("ID\tTitle\t\tAuthor\t\tStatus\n");
+
+    while (fread(&book, sizeof(struct Book), 1, file)) {
+        printf("%d\t%s\t\t%s\t\t%s\n", book.id, book.title, book.author, book.is_issued ? "Issued" : "Available");
+    }
+
+    fclose(file);
+}
+int main() {
+    int choice;
+
+    while(1) {
+        printf("\nLibrary Management System\n");
+        printf("1. Add Book\n");
+        printf("2. Search Book\n");
+        printf("3. Issue Book\n");
+        printf("4. Return Book\n");
+        printf("5. Display Books\n");
+        printf("6. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                add_book();
+                break;
+            case 2:
+                search_book();
+                break;
+            case 3:
+                issue_book();
+                break;
+            case 4:
+                return_book();
+                break;
+            case 5:
+                display_books();
+                break;
+            case 6:
+                exit(0);
+            default:
+                printf("Invalid choice.\n");
+        }
+    }
+    return 0;
+}
